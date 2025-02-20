@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import java.text.SimpleDateFormat
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -40,7 +41,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (!hasUsageStatsPermission()) {
-            requestUsageStatsPermission()
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
     }
 
@@ -52,11 +53,6 @@ class MainActivity : ComponentActivity() {
             packageName
         )
         return mode == AppOpsManager.MODE_ALLOWED
-    }
-
-    private fun requestUsageStatsPermission() {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        startActivity(intent)
     }
 }
 
@@ -78,8 +74,6 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
 }
 
-
-
 private fun report(appList: List<UsageStats>): String {
     val recentAppNames: List<String> = appList.map { it.packageName }
     val count = recentAppNames.count()
@@ -91,7 +85,14 @@ private fun getRecentApps(context: Context): List<UsageStats> {
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
     val endTime = System.currentTimeMillis()
     val startTime = endTime - 1000 * 60 * 60 // Dernière heure
+    val hh0 = formatTime(startTime)
+    val hh1 = formatTime(endTime)
     val queryUsageStats =
         usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
-    return queryUsageStats.filter { it.lastTimeUsed > startTime }
+    return queryUsageStats.filter { it.totalTimeInForeground > 0 }
+}
+
+private fun formatTime(time: Long): String {
+    val simpleDateFormat = SimpleDateFormat("yyyy/MM/dd-HH:mm:ss")
+    return simpleDateFormat.format(time)
 }
