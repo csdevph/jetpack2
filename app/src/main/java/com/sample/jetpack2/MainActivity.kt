@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,24 +22,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!hasUsageStatsPermission()) {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+        }
 //        enableEdgeToEdge()
         setContent {
             UsageStatsApp()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!hasUsageStatsPermission()) {
-            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
     }
 
@@ -56,13 +57,24 @@ fun UsageStatsApp() {
     val context = LocalContext.current
     var usageStatsList: List<UsageStats> by remember { mutableStateOf(getUsageStats(context)) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Button(onClick = {
-            usageStatsList = getUsageStats(context)
-        }) {
-            Text("Rafraîchir")
+    Column(
+        modifier = Modifier
+            .padding(start = 8.dp)
+            .fillMaxSize()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Button(onClick = {
+                usageStatsList = getUsageStats(context)
+            }) {
+                Text("Refresh")
+            }
+            val tt = epochMillis2HumanTime(System.currentTimeMillis(), timeAlone = true)
+            Text(
+                text = "\t\tCount = ${usageStatsList.size} at $tt"
+            )
         }
-        Text(text = "Count = ${usageStatsList.size}")
         UsageStatsList(usageStatsList)
     }
 
@@ -81,12 +93,14 @@ fun UsageStatsList(usageStatsList: List<UsageStats>) {
 fun UsageStatsItem(usageStats: UsageStats) {
     Column(
         modifier = Modifier
-            .padding(8.dp)
+            .padding(top = 8.dp)
             .fillMaxSize()
     ) {
-        Text(text = "Package: ${usageStats.packageName}")
-        Text(text = "Time in Foreground: ${usageStats.totalTimeInForeground / 1000} secondes")
-        Text(text = "Last Time: ${formatTime(usageStats.lastTimeUsed)}")
+        Text(text = "${usageStats.packageName}", color = Color.Blue)
+        Text(
+            text = "${epochMillis2HumanTime(usageStats.lastTimeUsed)}"
+                    + " ___TinF: ${usageStats.totalTimeInForeground / 1000 / 60} min"
+        )
     }
 }
 
@@ -105,7 +119,9 @@ private fun getList(appList: List<UsageStats>): List<String> {
     return list
 }
 
-private fun formatTime(time: Long): String {
-    val simpleDateFormat = SimpleDateFormat("yyyy/MM/dd-HH:mm:ss")
-    return simpleDateFormat.format(time)
+private fun epochMillis2HumanTime(epochMillis: Long, timeAlone: Boolean = false): String {
+    val pattern = if (timeAlone) "HH:mm:ss" else "yyyy/MM/dd - HH:mm:ss"
+    return Instant.ofEpochMilli(epochMillis)
+        .atZone(ZoneId.systemDefault())
+        .format(DateTimeFormatter.ofPattern(pattern))
 }
