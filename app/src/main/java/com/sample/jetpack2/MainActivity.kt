@@ -97,9 +97,11 @@ fun UsageStatsItem(usageStats: UsageStats) {
             .fillMaxSize()
     ) {
         Text(text = "${usageStats.packageName}", color = Color.Blue)
+        val totalMinutes = usageStats.totalTimeInForeground / 1000 / 60
         Text(
-            text = "${epochMillis2HumanTime(usageStats.lastTimeUsed)}"
-                    + " ___TinF: ${usageStats.totalTimeInForeground / 1000 / 60} min"
+            text = "${epochMillis2HumanTime(usageStats.firstTimeStamp)} __ "
+                    + if (totalMinutes < 1) "TinF < 1 min" else "TinF = $totalMinutes min",
+            color = if (totalMinutes < 1) Color.Gray else Color.Unspecified
         )
     }
 }
@@ -111,7 +113,8 @@ private fun getUsageStats(context: Context): List<UsageStats> {
     val startTime = endTime - 1000 * 60 * 60 * 24 // Dernières 24 heures
     return usageStatsManager.queryUsageStats(
         UsageStatsManager.INTERVAL_DAILY, startTime, endTime
-    ).filter { it.totalTimeInForeground >= 1000 }
+    ).filter { it.totalTimeInForeground >= 1000 }.sortedByDescending { it.firstTimeStamp }
+
 }
 
 private fun getList(appList: List<UsageStats>): List<String> {
