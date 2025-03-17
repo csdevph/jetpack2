@@ -7,8 +7,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -77,26 +79,30 @@ fun UsageStatsApp() {
         }
         UsageStatsList(usageStatsList)
     }
-
 }
 
 @Composable
 fun UsageStatsList(usageStatsList: List<UsageStats>) {
+    val pkgName = remember { mutableStateOf("com.sample.jetpack2") }
     LazyColumn {
-        items(usageStatsList) { usageStats ->
-            UsageStatsItem(usageStats)
+        items(usageStatsList) {
+            val bgColor =
+                if (it.packageName == pkgName.value) Color.LightGray else Color.Unspecified
+            UsageStatsItem(it, bgColor)
+            Log.d("TAGTAG", "UsageStatsList: ${it.packageName}")
         }
     }
 }
 
 @Composable
-fun UsageStatsItem(usageStats: UsageStats) {
+fun UsageStatsItem(usageStats: UsageStats, bgColor: Color) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
             .fillMaxSize()
+            .background(bgColor)
     ) {
-        Text(text = "${usageStats.packageName}", color = Color.Blue)
+        Text(text = usageStats.packageName, color = Color.Blue)
         val totalMinutes = usageStats.totalTimeInForeground / 1000 / 60
         Text(
             text = "${epochMillis2HumanTime(usageStats.lastTimeUsed)} __ "
@@ -113,8 +119,7 @@ private fun getUsageStats(context: Context): List<UsageStats> {
     val startTime = endTime - 1000 * 60 * 60 * 24 // Dernières 24 heures
     return usageStatsManager.queryUsageStats(
         UsageStatsManager.INTERVAL_DAILY, startTime, endTime
-    ).filter { it.totalTimeInForeground >= 1000 }.sortedBy { it.packageName }
-
+    ).filter { it.totalTimeInForeground >= 1000 }.sortedBy { it.lastTimeUsed }
 }
 
 private fun getList(appList: List<UsageStats>): List<String> {
