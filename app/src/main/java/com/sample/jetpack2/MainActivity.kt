@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,24 +84,24 @@ fun UsageStatsApp() {
 
 @Composable
 fun UsageStatsList(usageStatsList: List<UsageStats>) {
-    val pkgName = remember { mutableStateOf("com.sample.jetpack2") }
+    var pkgName by remember { mutableStateOf("") }
     LazyColumn {
         items(usageStatsList) {
-            val bgColor =
-                if (it.packageName == pkgName.value) Color.LightGray else Color.Unspecified
-            UsageStatsItem(it, bgColor)
+            val bgColor = if (it.packageName == pkgName) Color.LightGray else Color.Unspecified
+            UsageStatsItem(it, bgColor) { newValue -> pkgName = newValue }
             Log.d("TAGTAG", "UsageStatsList: ${it.packageName}")
         }
     }
 }
 
 @Composable
-fun UsageStatsItem(usageStats: UsageStats, bgColor: Color) {
+fun UsageStatsItem(usageStats: UsageStats, bgColor: Color, onPkgSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
             .padding(top = 8.dp)
             .fillMaxSize()
             .background(bgColor)
+            .clickable(onClick = { onPkgSelected(usageStats.packageName) })
     ) {
         Text(text = usageStats.packageName, color = Color.Blue)
         val totalMinutes = usageStats.totalTimeInForeground / 1000 / 60
