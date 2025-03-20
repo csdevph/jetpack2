@@ -62,7 +62,7 @@ fun UsageStatsApp() {
 
     Column(
         modifier = Modifier
-            .padding(start = 8.dp)
+            .padding(start = 8.dp, end = 8.dp)
             .fillMaxSize()
     ) {
         Row(
@@ -120,7 +120,7 @@ private fun getUsageStats(context: Context): List<UsageStats> {
     val startTime = endTime - 1000 * 60 * 60 * 24 // Dernières 24 heures
     return usageStatsManager.queryUsageStats(
         UsageStatsManager.INTERVAL_DAILY, startTime, endTime
-    ).filter { it.totalTimeInForeground >= 1000 }.sortedBy { it.lastTimeUsed }
+    ).filter { it.totalTimeInForeground >= 1000 }.sortedByDescending { it.lastTimeUsed }
 }
 
 private fun getList(appList: List<UsageStats>): List<String> {
