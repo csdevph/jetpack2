@@ -101,7 +101,7 @@ fun UsageStatsList(usageStatsList: List<UsageStats>) {
 fun UsageStatsItem(usageStats: UsageStats, bgColor: Color, onPkgSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
-            .padding(top = 8.dp)
+            .padding(top = 4.dp, bottom = 4.dp)
             .fillMaxSize()
             .background(bgColor)
             .clickable(onClick = { onPkgSelected(usageStats.packageName) })
