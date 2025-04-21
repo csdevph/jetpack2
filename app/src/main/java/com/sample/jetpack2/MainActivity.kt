@@ -34,12 +34,15 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+lateinit var myPackageName: String
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasUsageStatsPermission()) {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
+        myPackageName = this.packageName
 //        enableEdgeToEdge()
         setContent {
             UsageStatsApp()
@@ -118,9 +121,10 @@ private fun getUsageStats(context: Context): List<UsageStats> {
         context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
     val endTime = System.currentTimeMillis()
     val startTime = endTime - 1000 * 60 * 60 * 24 // Dernières 24 heures
-    return usageStatsManager.queryUsageStats(
-        UsageStatsManager.INTERVAL_DAILY, startTime, endTime
-    ).filter { it.totalTimeInForeground >= 1000 }.sortedByDescending { it.lastTimeUsed }
+    return usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
+        .filter { it.totalTimeInForeground >= 1000 }
+        .filter { it.packageName != myPackageName }
+        .sortedByDescending { it.lastTimeUsed }
 }
 
 private fun getList(appList: List<UsageStats>): List<String> {
