@@ -5,6 +5,7 @@ import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -35,6 +36,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 lateinit var myPackageName: String
+lateinit var myLaucher: String
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,8 @@ class MainActivity : ComponentActivity() {
             startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
         myPackageName = this.packageName
+        myLaucher = getLauncher(this)
+        Log.d("TAGTAG", "Launcher: ${myLaucher}")
 //        enableEdgeToEdge()
         setContent {
             UsageStatsApp()
@@ -106,7 +110,8 @@ fun UsageStatsItem(usageStats: UsageStats, bgColor: Color, onPkgSelected: (Strin
             .background(bgColor)
             .clickable(onClick = { onPkgSelected(usageStats.packageName) })
     ) {
-        Text(text = usageStats.packageName, color = Color.Blue)
+        val textColor = if (usageStats.packageName == myLaucher) Color.Magenta else Color.Blue
+        Text(text = usageStats.packageName, color = textColor)
         val totalMinutes = usageStats.totalTimeInForeground / 1000 / 60
         Text(
             text = "${epochMillis2HumanTime(usageStats.lastTimeUsed)} __ "
@@ -137,4 +142,15 @@ private fun epochMillis2HumanTime(epochMillis: Long, timeAlone: Boolean = false)
     return Instant.ofEpochMilli(epochMillis)
         .atZone(ZoneId.systemDefault())
         .format(DateTimeFormatter.ofPattern(pattern))
+}
+
+private fun getLauncher(context: Context): String {
+    val intent = Intent(Intent.ACTION_MAIN).apply {
+        addCategory(Intent.CATEGORY_HOME)
+    }
+    val packageManager = context.packageManager
+    val resolveInfo = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+    val launcherPackageName = resolveInfo?.activityInfo?.packageName
+
+    return (launcherPackageName.toString())
 }
