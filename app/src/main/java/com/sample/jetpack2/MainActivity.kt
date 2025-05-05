@@ -31,9 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import com.sample.jetpack2.utils.epochMillis2HumanTime
 
 lateinit var myPackageName: String
 lateinit var myLaucher: String
@@ -80,7 +78,7 @@ fun UsageStatsApp() {
             }) {
                 Text("Refresh")
             }
-            val tt = epochMillis2HumanTime(System.currentTimeMillis(), timeAlone = true)
+            val tt = System.currentTimeMillis().epochMillis2HumanTime(true)
             Text(
                 text = "\t\tCount = ${usageStatsList.size} at $tt"
             )
@@ -114,7 +112,7 @@ fun UsageStatsItem(usageStats: UsageStats, bgColor: Color, onPkgSelected: (Strin
         Text(text = usageStats.packageName, color = textColor)
         val totalMinutes = usageStats.totalTimeInForeground / 1000 / 60
         Text(
-            text = "${epochMillis2HumanTime(usageStats.lastTimeUsed)} __ "
+            text = "${usageStats.lastTimeUsed.epochMillis2HumanTime()} __ "
                     + if (totalMinutes < 1) "TinF < 1 min" else "TinF = $totalMinutes min",
             color = if (totalMinutes < 1) Color.Gray else Color.Unspecified
         )
@@ -135,13 +133,6 @@ private fun getUsageStats(context: Context): List<UsageStats> {
 private fun getList(appList: List<UsageStats>): List<String> {
     val list: List<String> = appList.map { it.packageName }
     return list
-}
-
-private fun epochMillis2HumanTime(epochMillis: Long, timeAlone: Boolean = false): String {
-    val pattern = if (timeAlone) "HH:mm:ss" else "yyyy/MM/dd - HH:mm:ss"
-    return Instant.ofEpochMilli(epochMillis)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern(pattern))
 }
 
 private fun getLauncher(context: Context): String {
